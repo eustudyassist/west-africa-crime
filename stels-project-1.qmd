@@ -1,0 +1,147 @@
+---
+title: "West African Crime"
+author: "Staffs Debs Stels"
+format: typst
+---
+
+
+## Introduction
+This report is to present an analysis of crimes committed in Western Africa.
+
+![Bullet on the floor](https://images.pexels.com/photos/34590928/pexels-photo-34590928.jpeg){width=50%}
+
+
+To approach the analysis, we make use of base R functions and `dplyr` package for added analysis. The package is loaded using the `library()` function.
+
+```{r}
+#| label: load-pkgs
+#| message: false
+#| warning: false
+
+library(dplyr)
+```
+
+Firstly we create objects of the crime data
+```{r}
+#|label: create-objects 
+
+country <- c(rep("Nigeria", 3), "Cameroon", rep("Nigeria", 3), 
+  "Cameroon", rep("Nigeria", 8), "Cameroon", rep("Nigeria", 3))
+country
+```
+
+
+```{r}
+length(country)
+unique(country)
+```
+
+City preview
+
+```{r}
+city <- c("Maiduguri", "Unknown", "Kano", "Bamenda", "Port Harcourt",
+          "Potiskum", "Damaturu", "Unknown", "Jos", "Lagos", "Gombe", "Kaduna",
+          "Logo district", "Konduga", "Warri", "Bama", "Buea", "Buni Yadi",
+          "Damboa", "Gamboru"
+          )
+city
+```
+
+This is a preview of the crime committed
+```{r}
+n_crime <- c(488, 225, 130, 87, 76, 65, 63, 55, 51, 46, 42, 38, 37, 36, 35, 32,
+             31, 30, 30, 29)
+n_crime
+```
+
+## Data Structure and type
+To ensure proper analysis we have to investigate if the data are the right types and have the right structure.
+
+```{r}
+typeof(country)
+typeof(city)
+typeof(n_crime)
+```
+
+The data types are of expected, with `typeof()` exposing that `country` and `city`, are both `r typeof(country)`.
+
+
+```{r}
+## Data Structure
+str(country)
+str(city)
+str(n_crime)
+```
+The number of elements in the object `country` is `r length(n_crime)` and this is the same for `city` and `n_crime`.
+
+## Data analysis
+
+The total number of crime committed is `r sum(n_crime)`. It would be nice to have indepth analysis about the countries and the crimes committed there. It is important to aggregate this data and change its structure to a `data.frame` to ensure smooth analysis.
+
+```{r}
+crime_tbl <- data.frame(
+  country,
+  city,
+  n_crime
+)
+
+crime_tbl |> head()
+```
+
+Next, we separate regions according to the level of crime from high to low.
+```{r}
+crime_tbl$crime_rate <- ifelse(
+  test = crime_tbl$n_crime >= 400,
+  yes = "High",
+  no = ifelse(
+    test = crime_tbl$n_crime >= 100,
+    yes = "Medium",
+    no = "Low"
+  )
+)
+
+crime_tbl |> 
+  head() |> 
+  knitr::kable()
+```
+The total number of crime commited in each region is given below.
+
+```{r}
+# Total number of crime and its average per country
+
+aggregate(crime_tbl$n_crime, by = list(country = country), FUN = "sum")
+```
+
+Alternatively, we could this using `dplyr` and we can get the average crime per region in the process of getting the total.
+```{r}
+crime_tbl |> 
+  summarize(
+    .by = country,
+    total_crime = sum(n_crime),
+    average_number_of_crime = mean(n_crime)
+  )|> 
+  knitr::kable()
+```
+
+```{r}
+crime_tbl |> 
+  summarize(
+    .by = country,
+    total_crime = sum(n_crime),
+    average_number_of_crime = mean(n_crime)
+  )
+```
+
+
+
+The country with the highest crime is given below.
+```{r}
+crime_tbl |> 
+  summarize(
+    .by = country,
+    total_crime = sum(n_crime)
+  ) |> 
+  top_n(n = 1, wt = total_crime) |> 
+  knitr::kable()
+```
+
